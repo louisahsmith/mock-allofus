@@ -1,0 +1,35 @@
+Package: mockallofus
+Title: A Local Mock Database for Developing All of Us Analyses
+Version: 0.0.0.9000
+Authors@R:
+    person("Louisa", "Smith", , "l.smith@northeastern.edu", role = c("aut", "cre"))
+Description: Builds a local DuckDB database with fully synthetic data that
+    mirrors the table and column structure of the All of Us Research Program
+    Curated Data Repository (OMOP CDM plus All of Us extensions). Lets users
+    develop and test 'allofus' package analysis code locally, without the paid
+    Researcher Workbench. The synthetic data is randomly generated and does not
+    reflect real All of Us data. The same analysis code is intended to run
+    against the mock database locally and against the real data on the
+    Workbench, with a small set of clearly-documented exceptions.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.1)
+Imports:
+    cli,
+    DBI,
+    dplyr,
+    duckdb,
+    purrr,
+    rlang,
+    stats,
+    stringr,
+    tibble,
+    withr
+Suggests:
+    allofus,
+    knitr,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
