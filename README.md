@@ -110,9 +110,16 @@ large majority of workflows run unchanged.
   rows. EHR-sourced rows are tagged in the `_ext` tables so EHR-based functions
   (like `aou_observation_period()`) behave correctly.
 - `mock_aou_connect()` opens the DuckDB database, registers a few
-  BigQuery-compatibility macros, and stores the connection in
-  `getOption("aou.default.con")` and a schema name in
-  `getOption("aou.default.cdr")` — exactly the options `allofus` reads.
+  BigQuery-compatibility macros, attaches BigQuery-compatible `dbplyr`
+  translations, and stores the connection in `getOption("aou.default.con")` and a
+  schema name in `getOption("aou.default.cdr")` — exactly the options `allofus`
+  reads.
+- BigQuery-isms common in All of Us code are handled so pipelines run unchanged:
+  the three-argument `date_diff(a, b, sql("day"))`, `as.Date()` of
+  float-valued concatenated date parts (e.g. `"1994-5.0-28.0"`), and the
+  `collect(page_size = ...)` download argument. More complex real-world
+  pipelines (e.g. the HIPPS pregnancy algorithm) run end-to-end on the mock
+  database after seeding their concept lists.
 
 ## Disclaimer
 

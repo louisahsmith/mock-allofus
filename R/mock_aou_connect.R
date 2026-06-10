@@ -45,6 +45,10 @@ mock_aou_connect <- function(path = default_mock_db_path(),
     ...
   )
 
+  # upgrade to the S4 subclass that carries BigQuery-compatible dbplyr
+  # translations (e.g. three-argument DATE_DIFF); see translation.R
+  con <- methods::new("mock_aou_connection", con)
+
   register_bq_macros(con)
 
   options(

@@ -3,6 +3,7 @@
 
 ## usethis namespace: start
 #' @importFrom rlang .data
+#' @importClassesFrom duckdb duckdb_connection
 ## usethis namespace: end
 NULL
 
