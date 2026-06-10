@@ -84,12 +84,14 @@ mock_seed_concept_set(con, c(3004410, 3005673), domain = "measurement",
 ```
 
 Survey questions are seeded with `mock_seed_survey()`, using the same question
-concept ids you pass to `allofus::aou_survey()`. (These must be real codebook
-concept ids --- `aou_survey()` validates them against `allofus::aou_codebook` ---
-so here we use education and income.)
+concept ids you pass to `allofus::aou_survey()`. Both ordinary survey questions
+and family-health-history questions work: here we seed a health-history question
+(type 2 diabetes, concept id `43529932`) plus education and income. For
+health-history questions, `hh_yes` sets the fraction who answer "Yes".
 
 ```{r seed-survey}
-mock_seed_survey(con, c(1585940, 1585375), prevalence = 0.8, seed = 5)
+mock_seed_survey(con, c(43529932, 1585940, 1585375),
+                 prevalence = 0.8, hh_yes = 0.3, seed = 5)
 ```
 
 ## Run your analysis, unchanged
@@ -141,13 +143,18 @@ ineligible <- list(device, lab_test) |>
 eligible <- anti_join(eligible, ineligible, by = "person_id")
 ```
 
-Attach survey data and bring the result into memory:
+Finally, attach survey data and keep only participants who did **not** report
+type 2 diabetes:
 
 ```{r survey}
-survey_data <- aou_survey(eligible, questions = c(1585940, 1585375),
-                          question_output = c("edu", "income"))
+survey_data <- aou_survey(eligible, questions = c(43529932, 1585940, 1585375),
+                          question_output = c("t2dm", "edu", "income"))
 
-cohort <- collect(survey_data)
+eligible <- survey_data |>
+  filter(t2dm == "No") |>
+  aou_join(eligible, type = "inner", by = "person_id")
+
+cohort <- collect(eligible)
 nrow(cohort)
 head(cohort)
 ```

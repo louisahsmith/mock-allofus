@@ -28,6 +28,20 @@ test_that("seeded events carry EHR src_id so they are visible to EHR-based funct
   expect_gt(ehr, 0)
 })
 
+test_that("mock_seed_survey handles family-health-history questions", {
+  skip_if_not_installed("allofus")
+  con <- local_mock_con(n_persons = 500L)
+  # 43529932 = "type 2 diabetes / self" (a health-history specific concept id)
+  mock_seed_survey(con, 43529932, prevalence = 1, hh_yes = 0.4, seed = 1, quiet = TRUE)
+  cohort <- dplyr::tbl(con, "person") |> dplyr::select("person_id")
+  sv <- suppressWarnings(allofus::aou_survey(cohort, questions = 43529932,
+                                             question_output = "t2dm", collect = TRUE))
+  expect_true("t2dm" %in% names(sv))
+  expect_true(all(stats::na.omit(sv$t2dm) %in% c("Yes", "No")))
+  expect_gt(sum(sv$t2dm == "Yes", na.rm = TRUE), 0)
+  expect_gt(sum(sv$t2dm == "No", na.rm = TRUE), 0)
+})
+
 test_that("seeding is deterministic for a fixed seed", {
   count_seeded <- function() {
     con <- local_mock_con(n_persons = 800L, seed = 42L)

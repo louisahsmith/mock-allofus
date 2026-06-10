@@ -67,57 +67,111 @@ mock_seed_concept_set <- function(con, concepts, domain = "condition",
 #' Seed survey responses into the mock database
 #'
 #' Inserts `observation` rows (with PPI `_ext` rows) for the given survey
-#' question concept ids, so [allofus::aou_survey()] returns data for them. Answer
-#' codes are taken from `allofus::aou_codebook` when available, or supplied via
-#' `answers`. Call with the same question concept ids you pass to `aou_survey()`.
+#' question concept ids, so [allofus::aou_survey()] returns data for them. Call
+#' with the same question concept ids you pass to `aou_survey()`.
+#'
+#' Two kinds of survey questions are handled automatically:
+#'
+#' * **Regular** questions (those in `allofus::aou_codebook`): a response is
+#'   inserted with `value_source_value` drawn from the question's answer
+#'   `choices` (or from `answers`).
+#' * **Family-health-history** questions (the "specific" condition/person
+#'   concept ids in `allofus::aou_health_history`, e.g. `43529932` for
+#'   "type 2 diabetes / self"): responses are inserted in the nested structure
+#'   `aou_survey()` expects, so it returns "Yes"/"No". The fraction answering
+#'   "Yes" is controlled by `hh_yes`.
 #'
 #' @param con A connection from [mock_aou_connect()].
-#' @param concept_ids Integer vector of survey question concept ids.
+#' @param concept_ids Integer vector of survey question concept ids (regular
+#'   and/or health-history "specific" concept ids).
 #' @param answers Optional character vector of answer codes (value_source_value)
-#'   to sample from. If `NULL`, uses the codebook `choices` for each question.
+#'   to sample from, for regular questions. If `NULL`, uses the codebook
+#'   `choices` for each question.
 #' @param prevalence Fraction of participants (0-1) who respond to each question.
+#' @param hh_yes For health-history questions, the fraction of responders who
+#'   answer "Yes" (have the condition). Ignored for regular questions.
 #' @param seed Optional random seed.
 #' @param quiet Suppress the summary message.
 #' @return The number of observation rows inserted, invisibly.
 #' @export
 mock_seed_survey <- function(con, concept_ids, answers = NULL, prevalence = 0.8,
-                             seed = NULL, quiet = FALSE) {
+                             hh_yes = 0.5, seed = NULL, quiet = FALSE) {
   if (!is.null(seed)) withr::local_seed(seed)
   concept_ids <- as.integer(concept_ids)
-  mock_add_concepts(con, concept_ids, domain_id = "Observation")
-  persons <- mock_person_ids(con)
 
+  regular_ids <- concept_ids[concept_ids %in% as.integer(aou_codebook$concept_id)]
+  hh_ids <- concept_ids[concept_ids %in% as.integer(aou_health_history$concept_id_specific)]
+  unknown <- setdiff(concept_ids, c(regular_ids, hh_ids))
+  if (length(unknown) > 0) {
+    cli::cli_warn(c("!" = "Concept id{?s} {unknown} not found in the codebook or health history; skipping."))
+  }
+  mock_add_concepts(con, c(regular_ids, hh_ids), domain_id = "Observation")
+
+  persons <- mock_person_ids(con)
   spec <- table_spec("observation")
   spec_ext <- table_spec("observation_ext")
   next_obs_id <- next_id(con, "observation", "observation_id")
   day0 <- as.Date("2017-05-01")
   mains <- list()
   exts <- list()
-  for (q in concept_ids) {
+
+  # collect a block of observation rows + their PPI _ext rows
+  add_block <- function(vals) {
+    n <- length(vals$person_id)
+    ids <- next_obs_id + seq_len(n)
+    next_obs_id <<- next_obs_id + n
+    vals$observation_id <- ids
+    mains[[length(mains) + 1]] <<- assemble_rows(spec, n, vals)
+    exts[[length(exts) + 1]] <<- assemble_rows(spec_ext, n, list(observation_id = ids, src_id = rep("PPI/PM", n)))
+  }
+
+  # regular codebook questions: value_source_value holds the answer code
+  for (q in regular_ids) {
     cb_row <- aou_codebook[as.integer(aou_codebook$concept_id) == q, ]
-    code <- if (nrow(cb_row)) cb_row$concept_code[1] else paste0("mock_", q)
     ans <- answers
-    if (is.null(ans)) ans <- if (nrow(cb_row)) parse_choice_codes(cb_row$choices[1]) else character(0)
+    if (is.null(ans)) ans <- parse_choice_codes(cb_row$choices[1])
     if (length(ans) == 0) ans <- "PMI_Skip"
     responders <- persons[stats::runif(length(persons)) < prevalence]
     if (length(responders) == 0) next
-    N <- length(responders)
-    ids <- next_obs_id + seq_len(N)
-    next_obs_id <- next_obs_id + N
-    vals <- list(
-      person_id = responders, observation_id = ids,
-      observation_concept_id = rep(q, N), observation_source_concept_id = rep(q, N),
-      observation_source_value = rep(code, N),
-      observation_date = day0 + sample.int(2000L, N, replace = TRUE),
-      value_source_value = resample(ans, N), value_source_concept_id = 0L
-    )
-    mains[[length(mains) + 1]] <- assemble_rows(spec, N, vals)
-    exts[[length(exts) + 1]] <- assemble_rows(spec_ext, N, list(observation_id = ids, src_id = rep("PPI/PM", N)))
+    n <- length(responders)
+    add_block(list(
+      person_id = responders,
+      observation_concept_id = q, observation_source_concept_id = q,
+      observation_source_value = cb_row$concept_code[1],
+      observation_date = day0 + sample.int(2000L, n, replace = TRUE),
+      value_source_value = resample(ans, n), value_source_concept_id = 0L
+    ))
   }
+
+  # health-history questions: aou_survey() looks at value_source_concept_id and
+  # calls it "Yes" when it equals the specific concept id, "No" for any other
+  # non-skip value. We file responses under the "specific" question concept id
+  # (type = Specific) and set value_source_concept_id accordingly.
+  for (specific in hh_ids) {
+    hh_rows <- aou_health_history[as.integer(aou_health_history$concept_id_specific) == specific, ]
+    question_id <- as.integer(hh_rows$concept_id_question)[1]
+    overall_id <- as.integer(hh_rows$concept_id_overall)[1]
+    no_value <- if (is.na(overall_id)) 0L else overall_id # any non-skip, non-specific id
+    responders <- persons[stats::runif(length(persons)) < prevalence]
+    if (length(responders) == 0) next
+    n <- length(responders)
+    is_yes <- stats::runif(n) < hh_yes
+    add_block(list(
+      person_id = responders,
+      observation_concept_id = question_id, observation_source_concept_id = question_id,
+      observation_source_value = hh_rows$concept_code[1],
+      observation_date = day0 + sample.int(2000L, n, replace = TRUE),
+      value_source_value = "selection",
+      value_source_concept_id = ifelse(is_yes, specific, no_value)
+    ))
+  }
+
   if (length(mains) == 0) return(invisible(0L))
   DBI::dbAppendTable(con, "observation", dplyr::bind_rows(mains))
   DBI::dbAppendTable(con, "observation_ext", dplyr::bind_rows(exts))
   total <- sum(purrr::map_int(mains, nrow))
-  if (!quiet) cli::cli_inform(c("v" = "Seeded {total} survey response{?s} for {length(concept_ids)} question{?s}."))
+  if (!quiet) {
+    cli::cli_inform(c("v" = "Seeded {total} survey response{?s} for {length(c(regular_ids, hh_ids))} question{?s}."))
+  }
   invisible(total)
 }

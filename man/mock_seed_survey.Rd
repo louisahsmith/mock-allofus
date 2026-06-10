@@ -9,6 +9,7 @@ mock_seed_survey(
   concept_ids,
   answers = NULL,
   prevalence = 0.8,
+  hh_yes = 0.5,
   seed = NULL,
   quiet = FALSE
 )
@@ -16,12 +17,17 @@ mock_seed_survey(
 \arguments{
 \item{con}{A connection from \code{\link[=mock_aou_connect]{mock_aou_connect()}}.}
 
-\item{concept_ids}{Integer vector of survey question concept ids.}
+\item{concept_ids}{Integer vector of survey question concept ids (regular
+and/or health-history "specific" concept ids).}
 
 \item{answers}{Optional character vector of answer codes (value_source_value)
-to sample from. If \code{NULL}, uses the codebook \code{choices} for each question.}
+to sample from, for regular questions. If \code{NULL}, uses the codebook
+\code{choices} for each question.}
 
 \item{prevalence}{Fraction of participants (0-1) who respond to each question.}
+
+\item{hh_yes}{For health-history questions, the fraction of responders who
+answer "Yes" (have the condition). Ignored for regular questions.}
 
 \item{seed}{Optional random seed.}
 
@@ -32,7 +38,19 @@ The number of observation rows inserted, invisibly.
 }
 \description{
 Inserts \code{observation} rows (with PPI \verb{_ext} rows) for the given survey
-question concept ids, so \code{\link[allofus:aou_survey]{allofus::aou_survey()}} returns data for them. Answer
-codes are taken from \code{allofus::aou_codebook} when available, or supplied via
-\code{answers}. Call with the same question concept ids you pass to \code{aou_survey()}.
+question concept ids, so \code{\link[allofus:aou_survey]{allofus::aou_survey()}} returns data for them. Call
+with the same question concept ids you pass to \code{aou_survey()}.
+}
+\details{
+Two kinds of survey questions are handled automatically:
+\itemize{
+\item \strong{Regular} questions (those in \code{allofus::aou_codebook}): a response is
+inserted with \code{value_source_value} drawn from the question's answer
+\code{choices} (or from \code{answers}).
+\item \strong{Family-health-history} questions (the "specific" condition/person
+concept ids in \code{allofus::aou_health_history}, e.g. \code{43529932} for
+"type 2 diabetes / self"): responses are inserted in the nested structure
+\code{aou_survey()} expects, so it returns "Yes"/"No". The fraction answering
+"Yes" is controlled by \code{hh_yes}.
+}
 }
