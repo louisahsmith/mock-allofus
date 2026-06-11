@@ -2,10 +2,26 @@
 % Please edit documentation in R/build_mock_db.R
 \name{default_mock_db_path}
 \alias{default_mock_db_path}
-\title{Default cache location for the mock database}
+\title{Default location for the mock database}
 \usage{
 default_mock_db_path()
 }
+\value{
+A path to the \code{.duckdb} file.
+}
 \description{
-Default cache location for the mock database
+By default the mock database lives in the current \strong{project directory}, as
+\code{mock_aou.duckdb}, so each project gets its own database rather than sharing a
+single global file. The project directory is found by looking upward from the
+working directory for an RStudio project (\code{.Rproj}), a git repository, a
+\code{.here} file, or an R package \code{DESCRIPTION}; if none is found, the working
+directory is used.
+}
+\details{
+Override the location by setting \code{options(mockallofus.path = "...")} (a full
+path to the \code{.duckdb} file), or pass \code{path} to \code{\link[=mock_aou_connect]{mock_aou_connect()}} /
+\code{\link[=build_mock_db]{build_mock_db()}} directly.
+
+The database file is generated data --- add \code{mock_aou.duckdb} to your
+\code{.gitignore}.
 }

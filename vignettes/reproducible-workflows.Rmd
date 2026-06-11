@@ -33,11 +33,12 @@ suppressMessages(library(dplyr))
 
 ## Build a database once, reuse it
 
-`mock_aou_connect()` builds a default database on first use and caches it. For a
-reproducible project you usually want an explicit, version-pinned database
-instead: control the size and the random seed, build it to a known path, seed
-your study's data, and reuse it. Generation is deterministic, so the same
-`seed` always yields the same database.
+`mock_aou_connect()` builds a database on first use --- by default
+`mock_aou.duckdb` in your current project directory ([`default_mock_db_path()`]),
+so each project keeps its own. For a reproducible project you usually want an
+explicit, version-pinned database: control the size and the random seed, build
+it to a known path, seed your study's data, and reuse it. Generation is
+deterministic, so the same `seed` always yields the same database.
 
 ```{r build}
 db_path <- tempfile(fileext = ".duckdb") # for a real project, a stable path
@@ -64,10 +65,11 @@ tbl(con, "condition_occurrence") |>
 ```
 
 `build_mock_db()` does nothing if the file already exists; pass
-`overwrite = TRUE` to rebuild. The default cache location is
-`default_mock_db_path()`. A common project setup is a small script that builds
-and seeds the database (committed to your repo), with the `.duckdb` file itself
-git-ignored and rebuilt on demand.
+`overwrite = TRUE` to rebuild. The default location is the project directory
+([`default_mock_db_path()`]); override it for all calls with
+`options(mockallofus.path = "...")`. A common project setup is a small script
+that builds and seeds the database (committed to your repo), with the `.duckdb`
+file itself git-ignored and rebuilt on demand.
 
 ## Raw SQL with `aou_sql()`
 

@@ -90,10 +90,41 @@ build_mock_db <- function(path = default_mock_db_path(),
   invisible(path)
 }
 
-#' Default cache location for the mock database
+#' Default location for the mock database
+#'
+#' By default the mock database lives in the current **project directory**, as
+#' `mock_aou.duckdb`, so each project gets its own database rather than sharing a
+#' single global file. The project directory is found by looking upward from the
+#' working directory for an RStudio project (`.Rproj`), a git repository, a
+#' `.here` file, or an R package `DESCRIPTION`; if none is found, the working
+#' directory is used.
+#'
+#' Override the location by setting `options(mockallofus.path = "...")` (a full
+#' path to the `.duckdb` file), or pass `path` to [mock_aou_connect()] /
+#' [build_mock_db()] directly.
+#'
+#' The database file is generated data --- add `mock_aou.duckdb` to your
+#' `.gitignore`.
+#'
+#' @return A path to the `.duckdb` file.
 #' @export
 default_mock_db_path <- function() {
-  file.path(tools::R_user_dir("mockallofus", "cache"), "mock_aou.duckdb")
+  getOption("mockallofus.path", file.path(find_project_dir(), "mock_aou.duckdb"))
+}
+
+# Walk up from `start` to find the project root, by common project markers.
+# Returns `start` if none are found.
+find_project_dir <- function(start = getwd()) {
+  dir <- normalizePath(start, winslash = "/", mustWork = FALSE)
+  repeat {
+    has_marker <- length(list.files(dir, pattern = "\\.Rproj$")) > 0 ||
+      any(file.exists(file.path(dir, c(".here", ".git", "DESCRIPTION"))))
+    if (has_marker) return(dir)
+    parent <- dirname(dir)
+    if (identical(parent, dir)) break # reached the filesystem root
+    dir <- parent
+  }
+  normalizePath(start, winslash = "/", mustWork = FALSE)
 }
 
 # ---- table creation ----------------------------------------------------------
