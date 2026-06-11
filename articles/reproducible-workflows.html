@@ -80,12 +80,13 @@ testing analysis code in CI without the Workbench.</p>
 <div class="section level2">
 <h2 id="build-a-database-once-reuse-it">Build a database once, reuse it<a class="anchor" aria-label="anchor" href="#build-a-database-once-reuse-it"></a>
 </h2>
-<p><code><a href="../reference/mock_aou_connect.html">mock_aou_connect()</a></code> builds a default database on first
-use and caches it. For a reproducible project you usually want an
-explicit, version-pinned database instead: control the size and the
-random seed, build it to a known path, seed your study’s data, and reuse
-it. Generation is deterministic, so the same <code>seed</code> always
-yields the same database.</p>
+<p><code><a href="../reference/mock_aou_connect.html">mock_aou_connect()</a></code> builds a database on first use — by
+default <code>mock_aou.duckdb</code> in your current project directory
+([<code><a href="../reference/default_mock_db_path.html">default_mock_db_path()</a></code>]), so each project keeps its own.
+For a reproducible project you usually want an explicit, version-pinned
+database: control the size and the random seed, build it to a known
+path, seed your study’s data, and reuse it. Generation is deterministic,
+so the same <code>seed</code> always yields the same database.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">db_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".duckdb"</span><span class="op">)</span> <span class="co"># for a real project, a stable path</span></span>
 <span></span>
@@ -106,16 +107,17 @@ analysis code against a stable dataset.</p>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">condition_concept_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">201826</span>, <span class="fl">4193704</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>people <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/n_distinct.html" class="external-link">n_distinct</a></span><span class="op">(</span><span class="va">person_id</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Source:   SQL [?? x 1]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1015-azure:R 4.6.0//tmp/RtmpxFqVmg/file1ec410a9d9eb.duckdb]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpdO180i/file1c8575ed7804.duckdb]</span></span></span>
 <span><span class="co">#&gt;    people</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int64&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     345</span></span></code></pre></div>
 <p><code><a href="../reference/build_mock_db.html">build_mock_db()</a></code> does nothing if the file already exists;
-pass <code>overwrite = TRUE</code> to rebuild. The default cache
-location is <code><a href="../reference/default_mock_db_path.html">default_mock_db_path()</a></code>. A common project setup
-is a small script that builds and seeds the database (committed to your
-repo), with the <code>.duckdb</code> file itself git-ignored and rebuilt
-on demand.</p>
+pass <code>overwrite = TRUE</code> to rebuild. The default location is
+the project directory ([<code><a href="../reference/default_mock_db_path.html">default_mock_db_path()</a></code>]); override
+it for all calls with <code>options(mockallofus.path = "...")</code>. A
+common project setup is a small script that builds and seeds the
+database (committed to your repo), with the <code>.duckdb</code> file
+itself git-ignored and rebuilt on demand.</p>
 </div>
 <div class="section level2">
 <h2 id="raw-sql-with-aou_sql">Raw SQL with <code>aou_sql()</code><a class="anchor" aria-label="anchor" href="#raw-sql-with-aou_sql"></a>
@@ -172,7 +174,7 @@ call runs against real data.</p>
 <span></span>
 <span><span class="fu">high_a1c_cohort</span><span class="op">(</span>con <span class="op">=</span> <span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">tally</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Source:   SQL [?? x 1]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1015-azure:R 4.6.0//tmp/RtmpxFqVmg/file1ec410a9d9eb.duckdb]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpdO180i/file1c8575ed7804.duckdb]</span></span></span>
 <span><span class="co">#&gt;         n</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int64&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     359</span></span></code></pre></div>

@@ -18,11 +18,14 @@ suppressMessages(library(dplyr))
 ## Build a database once, reuse it
 
 [`mock_aou_connect()`](https://louisahsmith.github.io/mockallofus/reference/mock_aou_connect.md)
-builds a default database on first use and caches it. For a reproducible
-project you usually want an explicit, version-pinned database instead:
-control the size and the random seed, build it to a known path, seed
-your study’s data, and reuse it. Generation is deterministic, so the
-same `seed` always yields the same database.
+builds a database on first use — by default `mock_aou.duckdb` in your
+current project directory
+(\[[`default_mock_db_path()`](https://louisahsmith.github.io/mockallofus/reference/default_mock_db_path.md)\]),
+so each project keeps its own. For a reproducible project you usually
+want an explicit, version-pinned database: control the size and the
+random seed, build it to a known path, seed your study’s data, and reuse
+it. Generation is deterministic, so the same `seed` always yields the
+same database.
 
 ``` r
 
@@ -49,7 +52,7 @@ tbl(con, "condition_occurrence") |>
   filter(condition_concept_id %in% c(201826, 4193704)) |>
   summarise(people = n_distinct(person_id))
 #> # Source:   SQL [?? x 1]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1015-azure:R 4.6.0//tmp/RtmpxFqVmg/file1ec410a9d9eb.duckdb]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpdO180i/file1c8575ed7804.duckdb]
 #>    people
 #>   <int64>
 #> 1     345
@@ -57,9 +60,10 @@ tbl(con, "condition_occurrence") |>
 
 [`build_mock_db()`](https://louisahsmith.github.io/mockallofus/reference/build_mock_db.md)
 does nothing if the file already exists; pass `overwrite = TRUE` to
-rebuild. The default cache location is
-[`default_mock_db_path()`](https://louisahsmith.github.io/mockallofus/reference/default_mock_db_path.md).
-A common project setup is a small script that builds and seeds the
+rebuild. The default location is the project directory
+(\[[`default_mock_db_path()`](https://louisahsmith.github.io/mockallofus/reference/default_mock_db_path.md)\]);
+override it for all calls with `options(mockallofus.path = "...")`. A
+common project setup is a small script that builds and seeds the
 database (committed to your repo), with the `.duckdb` file itself
 git-ignored and rebuilt on demand.
 
@@ -130,7 +134,7 @@ mock_seed_concept_set(con, c(3004410, 3005673), domain = "measurement",
 
 high_a1c_cohort(con = con) |> tally()
 #> # Source:   SQL [?? x 1]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1015-azure:R 4.6.0//tmp/RtmpxFqVmg/file1ec410a9d9eb.duckdb]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpdO180i/file1c8575ed7804.duckdb]
 #>         n
 #>   <int64>
 #> 1     359

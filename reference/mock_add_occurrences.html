@@ -63,6 +63,7 @@ specific set of participants a specific concept on specific dates.</p>
 <span>  <span class="va">person_id</span>,</span>
 <span>  <span class="va">concept_id</span>,</span>
 <span>  <span class="va">date</span>,</span>
+<span>  end_date <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  value <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  source <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ehr"</span>, <span class="st">"ppi"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -91,7 +92,15 @@ specific set of participants a specific concept on specific dates.</p>
 
 <dt id="arg-date">date<a class="anchor" aria-label="anchor" href="#arg-date"></a></dt>
 <dd><p>Event date(s) (Date or coercible); recycled to <code>length(person_id)</code>.
-Used for the domain's start date (and end date, where the table has one).</p></dd>
+Used for the domain's start date (and, unless <code>end_date</code> is given, its end
+date too).</p></dd>
+
+
+<dt id="arg-end-date">end_date<a class="anchor" aria-label="anchor" href="#arg-end-date"></a></dt>
+<dd><p>Optional end date(s) for domains that have an end column
+(e.g. <code>drug_exposure</code>, <code>condition_occurrence</code>, <code>visit_occurrence</code>). Recycled
+to <code>length(person_id)</code>. Defaults to <code>date</code> (a single-day event). Use this to
+give exposures a realistic duration.</p></dd>
 
 
 <dt id="arg-value">value<a class="anchor" aria-label="anchor" href="#arg-value"></a></dt>

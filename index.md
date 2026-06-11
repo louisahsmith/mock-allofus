@@ -55,7 +55,7 @@ library(allofus)
 library(mockallofus)
 library(dplyr)
 
-con <- mock_aou_connect()   # builds the database on first run, then caches it
+con <- mock_aou_connect()   # builds mock_aou.duckdb in your project dir on first run, then reuses it
 
 # ...the same code you'd run on the Workbench:
 tbl(con, "person") |> count() |> collect()

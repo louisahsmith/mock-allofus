@@ -55,7 +55,7 @@ library(allofus)
 library(mockallofus)
 library(dplyr)
 
-con <- mock_aou_connect()   # builds the database on first run, then caches it
+con <- mock_aou_connect()   # builds mock_aou.duckdb in your project dir on first run, then reuses it
 
 # ...the same code you'd run on the Workbench:
 tbl(con, "person") |> count() |> collect()
@@ -175,7 +175,7 @@ Create or locate the local DuckDB database.
 - [`build_mock_db()`](https://louisahsmith.github.io/mockallofus/reference/build_mock_db.md)
   : Build a local mock All of Us DuckDB database
 - [`default_mock_db_path()`](https://louisahsmith.github.io/mockallofus/reference/default_mock_db_path.md)
-  : Default cache location for the mock database
+  : Default location for the mock database
 
 ## OMOP vocabulary
 

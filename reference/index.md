@@ -17,7 +17,7 @@ Create or locate the local DuckDB database.
 - [`build_mock_db()`](https://louisahsmith.github.io/mockallofus/reference/build_mock_db.md)
   : Build a local mock All of Us DuckDB database
 - [`default_mock_db_path()`](https://louisahsmith.github.io/mockallofus/reference/default_mock_db_path.md)
-  : Default cache location for the mock database
+  : Default location for the mock database
 
 ## OMOP vocabulary
 

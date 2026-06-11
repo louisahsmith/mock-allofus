@@ -26,7 +26,10 @@ library(mockallofus)
 library(allofus)
 suppressMessages(library(dplyr))
 
-con <- mock_aou_connect()
+# In your own work just call mock_aou_connect(), which builds and reuses a
+# database in your project directory. This vignette writes to a throwaway file
+# so building it never collides with a database you have open elsewhere.
+con <- mock_aou_connect(path = tempfile(fileext = ".duckdb"))
 ```
 
 The database already has synthetic participants and a broad spread of
@@ -37,7 +40,7 @@ generic clinical events and survey responses, so ordinary
 
 tbl(con, "person") |> tally()
 #> # Source:   SQL [?? x 1]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1015-azure:R 4.6.0//home/runner/.cache/R/mockallofus/mock_aou.duckdb]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpGcYgkh/file1c3e564097e7.duckdb]
 #>         n
 #>   <int64>
 #> 1    2000
@@ -45,7 +48,7 @@ tbl(con, "person") |> tally()
 tbl(con, "measurement") |>
   summarise(n = n(), n_people = n_distinct(person_id))
 #> # Source:   SQL [?? x 2]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1015-azure:R 4.6.0//home/runner/.cache/R/mockallofus/mock_aou.duckdb]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpGcYgkh/file1c3e564097e7.duckdb]
 #>         n n_people
 #>   <int64>  <int64>
 #> 1   10002     1819
@@ -122,7 +125,7 @@ eligible <- survey_date_tbl |>
 
 tally(eligible)
 #> # Source:   SQL [?? x 1]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1015-azure:R 4.6.0//home/runner/.cache/R/mockallofus/mock_aou.duckdb]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpGcYgkh/file1c3e564097e7.duckdb]
 #>         n
 #>   <int64>
 #> 1    1805

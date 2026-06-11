@@ -16,6 +16,7 @@ mock_add_occurrences(
   person_id,
   concept_id,
   date,
+  end_date = NULL,
   value = NULL,
   source = c("ehr", "ppi")
 )
@@ -44,8 +45,15 @@ mock_add_occurrences(
 - date:
 
   Event date(s) (Date or coercible); recycled to `length(person_id)`.
-  Used for the domain's start date (and end date, where the table has
-  one).
+  Used for the domain's start date (and, unless `end_date` is given, its
+  end date too).
+
+- end_date:
+
+  Optional end date(s) for domains that have an end column (e.g.
+  `drug_exposure`, `condition_occurrence`, `visit_occurrence`). Recycled
+  to `length(person_id)`. Defaults to `date` (a single-day event). Use
+  this to give exposures a realistic duration.
 
 - value:
 
